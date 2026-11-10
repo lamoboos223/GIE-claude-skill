@@ -27,6 +27,9 @@ const ARCH = {
       label: 'Orders API',
       kind: 'backend',       // frontend | backend | database | cache | queue | external (sets border color)
       row: 1,                // vertical layer, 0 = top; nodes in a row spread evenly
+      col: 2,                // optional. By default each row is auto-ordered so nodes sit
+                             // near their edge neighbors (fewer crossings). If ANY node
+                             // sets col, auto-ordering is off and every row sorts by col.
       note: '...' }          // (html) shown in the detail card when clicked
   ],
   edges: [

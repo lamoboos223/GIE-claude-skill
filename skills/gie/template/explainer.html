@@ -533,19 +533,45 @@ const SCENARIOS = [
     const svg = document.getElementById('arch-svg');
     const detail = document.getElementById('arch-detail');
     const NW = 150, NH = 48, W = 1000;
+    const byId = {};
+    ARCH.nodes.forEach(n => { byId[n.id] = n; });
     const rows = {};
     ARCH.nodes.forEach(n => { (rows[n.row] = rows[n.row] || []).push(n); });
     const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
     const H = 70 + rowKeys.length * 120;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    // Order nodes inside each row so they sit near their neighbors
+    // (barycenter sweeps), unless the data pins columns with `col`.
+    const nb = {};
+    ARCH.edges.forEach(e => {
+      if (!byId[e.from] || !byId[e.to]) return;
+      (nb[e.from] = nb[e.from] || []).push(e.to);
+      (nb[e.to] = nb[e.to] || []).push(e.from);
+    });
+    const frac = {};
+    rowKeys.forEach(r => rows[r].forEach((n, i) => { frac[n.id] = (i + 1) / (rows[r].length + 1); }));
+    if (ARCH.nodes.some(n => n.col != null)) {
+      rowKeys.forEach(r => rows[r].sort((a, b) => (a.col || 0) - (b.col || 0)));
+    } else {
+      for (let it = 0; it < 4; it++) {
+        const sweep = it % 2 ? [...rowKeys].reverse() : rowKeys;
+        sweep.forEach(r => {
+          const bary = {};
+          rows[r].forEach(n => {
+            const ns = nb[n.id] || [];
+            bary[n.id] = ns.length ? ns.reduce((s, id) => s + frac[id], 0) / ns.length : frac[n.id];
+          });
+          rows[r].sort((a, b) => bary[a.id] - bary[b.id]);
+          rows[r].forEach((n, i) => { frac[n.id] = (i + 1) / (rows[r].length + 1); });
+        });
+      }
+    }
     rowKeys.forEach((r, ri) => {
       rows[r].forEach((n, i) => {
         n.x = W * (i + 1) / (rows[r].length + 1);
         n.y = 60 + ri * 120;
       });
     });
-    const byId = {};
-    ARCH.nodes.forEach(n => { byId[n.id] = n; });
     const el = (tag, attrs, parent) => {
       const e = document.createElementNS(NS, tag);
       Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
