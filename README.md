@@ -27,7 +27,7 @@ Three tabs, all interactive, one HTML file, no dependencies:
 This repo is a Claude Code plugin marketplace. Inside Claude Code:
 
 ```
-/plugin marketplace add <github-user>/consultant-claude-skill
+/plugin marketplace add lamoboos223/consultant-claude-skill
 /plugin install gie@gie
 ```
 
