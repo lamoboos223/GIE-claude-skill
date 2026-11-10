@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product explainer</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1d23; --muted: #5f6672; --line: #e3e6eb; --card: #f7f8fa;
+    --accent: #3b6fd8; --accent-soft: #e8effc;
+    --green: #1f8a5b; --green-soft: #e3f4ec;
+    --amber: #a8630a; --amber-soft: #fbf0df;
+    --red: #c23b3b; --red-soft: #fbe6e6;
+    --violet: #7246c4; --violet-soft: #efe8fb;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171c; --fg: #e7e9ee; --muted: #9aa1ad; --line: #2c3039; --card: #1d2027;
+      --accent: #7fa6ff; --accent-soft: #1f2a44;
+      --green: #5cc896; --green-soft: #17302a;
+      --amber: #e8a64c; --amber-soft: #352816;
+      --red: #f07d7d; --red-soft: #3a1d1f;
+      --violet: #b294f5; --violet-soft: #2a2140;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171c; --fg: #e7e9ee; --muted: #9aa1ad; --line: #2c3039; --card: #1d2027;
+    --accent: #7fa6ff; --accent-soft: #1f2a44;
+    --green: #5cc896; --green-soft: #17302a;
+    --amber: #e8a64c; --amber-soft: #352816;
+    --red: #f07d7d; --red-soft: #3a1d1f;
+    --violet: #b294f5; --violet-soft: #2a2140;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 56px; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 80px; }
+  main.wide { max-width: 1560px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0 0 12px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  code, .mono { font-family: var(--mono); font-size: 13px; }
+  p code, li code, td code, div code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+
+  nav { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin: 20px 0 28px; display: flex; gap: 4px; overflow-x: auto; }
+  nav button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+  nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+  section[hidden] { display: none; }
+  section > * + * { margin-top: 24px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .layers { display: grid; gap: 8px; }
+  .layer { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .layer b { font-weight: 600; }
+  @media (max-width: 560px) { .layer { grid-template-columns: 1fr; } }
+
+  /* ---- Core idea: component map ---- */
+  .arch-wrap { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 8px; overflow-x: auto; }
+  svg.arch { display: block; width: 100%; min-width: 720px; height: auto; }
+  svg.arch text { font-family: inherit; fill: var(--fg); }
+  svg.arch .node rect { fill: var(--bg); stroke: var(--line); stroke-width: 1.4; rx: 9; cursor: pointer; }
+  svg.arch .node text { font-size: 13px; font-weight: 600; pointer-events: none; }
+  svg.arch .node .kind { font-size: 10px; font-weight: 600; fill: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  svg.arch .node.k-frontend rect { stroke: var(--accent); }
+  svg.arch .node.k-backend rect { stroke: var(--violet); }
+  svg.arch .node.k-database rect { stroke: var(--green); }
+  svg.arch .node.k-cache rect { stroke: var(--red); }
+  svg.arch .node.k-queue rect { stroke: var(--amber); }
+  svg.arch .node.k-external rect { stroke-dasharray: 4 3; }
+  svg.arch .edge path { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 7 5; animation: archflow 1.1s linear infinite; }
+  svg.arch .edge text { font-size: 11px; fill: var(--muted); paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; }
+  @keyframes archflow { to { stroke-dashoffset: -12; } }
+  @media (prefers-reduced-motion: reduce) { svg.arch .edge path { animation: none; } }
+  svg.arch.focus .node { opacity: .3; }
+  svg.arch.focus .node.on, svg.arch.focus .node.rel { opacity: 1; }
+  svg.arch.focus .node.on rect { stroke: var(--accent); stroke-width: 2.4; }
+  svg.arch.focus .edge { opacity: .15; }
+  svg.arch.focus .edge.on { opacity: 1; }
+  svg.arch.focus .edge.on path { stroke: var(--accent); stroke-width: 2.2; }
+  svg.arch .arrhead { fill: var(--muted); }
+  #arch-detail { min-height: 72px; }
+
+  /* ---- Data model: ERD ---- */
+  .erd { columns: 3 280px; column-gap: 10px; }
+  .tbl { border: 1px solid var(--line); border-radius: 10px; background: var(--card); cursor: pointer; transition: opacity .15s, border-color .15s, box-shadow .15s; text-align: left; font: inherit; color: inherit; padding: 0; width: 100%; display: inline-block; vertical-align: top; break-inside: avoid; margin: 0 0 10px; }
+  .tbl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tbl header { padding: 8px 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .tbl header .mono { font-size: 14px; font-weight: 650; }
+  .tbl ul { list-style: none; margin: 0; padding: 4px 0; }
+  .tbl li { display: grid; grid-template-columns: 22px max-content minmax(0, 1fr); gap: 8px; padding: 1px 10px; font-family: var(--mono); font-size: 12.5px; align-items: baseline; }
+  .tbl li .t { color: var(--muted); overflow-wrap: anywhere; text-align: left; }
+  .key { font-size: 10px; font-weight: 700; border-radius: 3px; text-align: center; line-height: 16px; height: 16px; align-self: center; }
+  .key.pk { background: var(--amber-soft); color: var(--amber); }
+  .key.fk { background: var(--accent-soft); color: var(--accent); }
+  .key.uq { background: var(--green-soft); color: var(--green); }
+  .erd.focus .tbl { opacity: .35; }
+  .erd.focus .tbl.on { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .erd.focus .tbl.rel { opacity: 1; border-color: var(--muted); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .legend .key { display: inline-block; width: 22px; }
+  #erd-detail { min-height: 120px; }
+  #erd-detail ul { margin: 6px 0 0; padding-left: 18px; }
+
+  pre { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; }
+
+  /* ---- Scenarios: sequence diagram ---- */
+  .seq-wrap { border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow-x: auto; }
+  svg.seq { display: block; width: 100%; min-width: 760px; height: auto; }
+  svg.seq text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: var(--fg); }
+  svg.seq .lane-label { font-size: 13px; font-weight: 600; }
+  svg.seq .lane-box { fill: var(--card); stroke: var(--fg); stroke-width: 1; }
+  svg.seq .lifeline { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  svg.seq .msg line { stroke: var(--muted); stroke-width: 1.3; }
+  svg.seq .msg text { font-size: 12px; fill: var(--muted); }
+  svg.seq .msg .num { fill: var(--bg); font-size: 11px; font-weight: 700; }
+  svg.seq .msg circle { fill: var(--muted); }
+  svg.seq .msg { cursor: pointer; }
+  svg.seq .msg.async line { stroke-dasharray: 5 3; }
+  svg.seq .msg.on line { stroke: var(--accent); stroke-width: 2.2; }
+  svg.seq .msg.on text { fill: var(--fg); font-weight: 600; }
+  svg.seq .msg.on circle { fill: var(--accent); }
+  svg.seq .msg.done line { stroke: var(--fg); }
+  svg.seq .msg.done circle { fill: var(--fg); }
+  svg.seq .msg.done text { fill: var(--fg); }
+  svg.seq .msg.on .num, svg.seq .msg.done .num { fill: var(--bg); }
+  svg.seq .hit { fill: transparent; }
+  svg.seq .msg text:not(.num) { paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  svg.seq .lane-box.table { fill: var(--accent-soft); stroke: var(--accent); }
+  svg.seq .lane-label.table { font-family: var(--mono); font-size: 12px; fill: var(--accent); }
+  svg.seq .tx { fill: none; stroke: var(--amber); stroke-width: 1.2; stroke-dasharray: 6 4; }
+  svg.seq .tx-label { font-size: 11px; fill: var(--amber); font-weight: 600; }
+
+  /* ---- Scenarios: layout ---- */
+  .scen-list { display: flex; flex-direction: column; gap: 18px; }
+  .scen-section { display: flex; flex-direction: column; gap: 8px; }
+  .scen-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .scen-list .btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .scen-open-flag { margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--amber); }
+  .scen-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .scen-layout.folded { grid-template-columns: minmax(0, 1fr); }
+  .scen-layout.folded .scen-rail { display: none; }
+  .scen-rail { position: sticky; top: 52px; max-height: calc(100vh - 68px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .scen-rail-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; padding: 10px 12px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .scen-rail-bar h2 { margin: 0; font-size: 16px; }
+  .scen-rail-scroll { overflow: auto; padding: 12px; min-height: 0; }
+  .scen-help { margin: 0 0 12px; font-size: 12.5px; }
+  .scen-help summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+  .scen-help p { margin: 8px 0 0; }
+  .scen-rail .scen-btns { flex-direction: column; align-items: stretch; }
+  .scen-rail .scen-section h3 { margin: 2px 0 0; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .scen-rail .btn { width: 100%; text-align: left; padding: 6px 10px; font-size: 13.5px; }
+  .scen-main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .scen-main > * { margin: 0; }
+  #scenarios { scroll-margin-top: 56px; }
+  .scen-show { align-self: flex-start; }
+  @media (max-width: 980px) {
+    .scen-layout { grid-template-columns: minmax(0, 1fr); }
+    .scen-rail { position: static; max-height: 42vh; }
+  }
+  .step-card pre { margin-top: 10px; background: var(--bg); white-space: pre-wrap; overflow: visible; overflow-wrap: anywhere; }
+  .step-card { min-height: 96px; }
+  .scen-stage { display: grid; grid-template-columns: 292px minmax(0, 1.15fr) minmax(280px, 0.85fr); grid-template-areas: "phone seq side"; gap: 16px; align-items: start; }
+  .scen-stage.no-phone { grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.9fr); grid-template-areas: "seq side"; }
+  .scen-stage.no-phone .scen-phone { display: none; }
+  .scen-phone { grid-area: phone; }
+  .scen-phone .phone-wrap { width: 280px; }
+  .scen-phone .phone { width: 280px; height: 580px; }
+  .scen-phone.idle .phone, .scen-phone.idle .web { box-shadow: none; filter: saturate(.55); opacity: .62; }
+  .scen-phone.idle .here { color: var(--muted); font-weight: 500; }
+  .scen-phone.live .phone, .scen-phone.live .web { box-shadow: 0 0 0 2px var(--accent), 0 18px 40px rgba(16, 24, 40, .16); }
+  .scen-stage .seq-wrap { grid-area: seq; min-width: 0; }
+  .scen-side { grid-area: side; position: sticky; top: 58px; display: flex; flex-direction: column; gap: 10px; }
+  .scen-side .step-card { flex: 0 0 auto; overflow: visible; }
+  .db-board { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 76px); overflow: auto; }
+  .db-board-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .db-board-bar b { font-size: 14px; }
+  .scen-stage.db-folded .db-board { display: none; }
+  @media (max-width: 1100px) {
+    .scen-stage, .scen-stage.no-phone { grid-template-columns: 1fr; grid-template-areas: "phone" "seq" "side"; }
+    .scen-phone .phone-wrap { position: static; margin: 0 auto; }
+    .scen-side { position: static; }
+    .db-board { max-height: none; overflow: visible; }
+  }
+  .db-grid { display: flex; flex-direction: column; gap: 12px; }
+  .db-card { border: 1px solid var(--line); border-radius: 10px; background: var(--card); overflow: auto; }
+  .db-card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .db-card header { position: sticky; left: 0; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .db-card header span { color: var(--muted); font-size: 12px; }
+  .db-card table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  .db-card th, .db-card td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .db-card th { color: var(--muted); font-weight: 600; background: var(--card); }
+  .db-card tr.touch td { background: var(--green-soft); }
+  .db-card tr.update td { background: var(--amber-soft); }
+  .db-card tr.read td { background: var(--accent-soft); }
+  .db-card td.nil { color: var(--muted); }
+  .db-empty { padding: 10px 12px; color: var(--muted); font-size: 13px; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: 14px; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .btn:disabled { opacity: .45; cursor: default; }
+
+  /* ---- Device mockups ---- */
+  .phone-wrap { width: 280px; }
+  .phone { width: 280px; height: 580px; border: 1px solid #d7dbe2; border-radius: 32px; background: #fff; color: #111; overflow: hidden; box-shadow: 0 18px 40px rgba(16, 24, 40, .16); }
+  .phone-caption { margin: 8px 4px 0; font-size: 12px; color: var(--muted); }
+  .here { font-size: 12px; font-weight: 650; color: var(--accent); margin: 8px 0 0; }
+  .dev-screen { height: 100%; min-height: 0; background: #fff; color: #111; position: relative; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+  .dev-screen.away { background: #0e1524; color: #fff; }
+  .ios-status { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 4px; font-size: 13px; font-weight: 700; }
+  .away .ios-status { color: #fff; }
+  .away-time { font-size: 52px; font-weight: 650; letter-spacing: -.03em; text-align: center; margin-top: 48px; }
+  .away-date { text-align: center; font-size: 15px; opacity: .8; }
+  .away-note { text-align: center; font-size: 13px; margin: 22px 0 8px; color: #d7deea; }
+  .dev-body { padding: 8px 14px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow: auto; }
+  .scr-header { display: flex; align-items: center; gap: 8px; padding: 2px 0 6px; border-bottom: 1px solid #eceff3; }
+  .scr-header .back { font-size: 22px; line-height: 1; color: #6b7280; }
+  .scr-header b { display: block; font-size: 17px; font-weight: 750; }
+  .scr-header small { display: block; color: #6b7280; font-size: 12px; }
+  .scr-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 8px 2px; }
+  .scr-row.on { background: #f6f7f9; border-radius: 12px; padding: 8px; }
+  .scr-av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 750; color: #fff; background: #2563eb; font-size: 15px; }
+  .scr-row b { display: block; font-size: 14px; font-weight: 700; line-height: 1.2; }
+  .scr-row small { display: block; color: #6b7280; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+  .scr-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: #e11d48; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
+  .bubble { max-width: 86%; padding: 8px 10px; border-radius: 14px; font-size: 13.5px; background: #f3f4f6; }
+  .bubble.out { margin-left: auto; background: #e2edfc; }
+  .bubble.sys { margin: 0 auto; background: transparent; color: #6b7280; font-size: 12px; text-align: center; }
+  .bubble .meta { margin-top: 4px; font-size: 11px; color: #6b7280; text-align: right; }
+  .scr-note { color: #6b7280; font-size: 12.5px; }
+  .scr-btn { background: #111; color: #fff; text-align: center; border-radius: 14px; padding: 11px 10px; font-weight: 650; font-size: 14px; }
+  .scr-btn.soft { background: #f3f4f6; color: #111; }
+  .composer { margin-top: auto; background: #f3f4f6; border-radius: 18px; padding: 10px 12px; font-size: 13.5px; color: #9aa1ab; }
+  .composer.send { color: #111; }
+  .composer.locked { background: #fff7ed; color: #a8630a; }
+  .phone-banner { position: absolute; left: 12px; right: 12px; top: 44px; background: rgba(255,255,255,.96); color: #111; border-radius: 16px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); z-index: 4; }
+  .phone-banner b { display: block; font-size: 12px; }
+  .phone-banner span { font-size: 13px; }
+  .toast { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); background: #111; color: #fff; border-radius: 99px; padding: 6px 12px; font-size: 12px; z-index: 4; white-space: nowrap; }
+  /* web/browser frame */
+  .web { width: 280px; height: 420px; border: 1px solid #d7dbe2; border-radius: 12px; background: #fff; color: #111; overflow: hidden; box-shadow: 0 18px 40px rgba(16, 24, 40, .16); display: flex; flex-direction: column; }
+  .web-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #eceff3; background: #f6f7f9; }
+  .web-bar i { width: 10px; height: 10px; border-radius: 50%; background: #d7dbe2; font-style: normal; }
+  .web-bar i:nth-child(1) { background: #f87171; } .web-bar i:nth-child(2) { background: #fbbf24; } .web-bar i:nth-child(3) { background: #34d399; }
+  .web-url { flex: 1; background: #fff; border: 1px solid #eceff3; border-radius: 8px; font-size: 11px; color: #6b7280; padding: 3px 8px; font-family: var(--mono); }
+  .web .dev-screen { flex: 1; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="page-title"></h1>
+  <p class="muted" id="page-subtitle"></p>
+
+  <nav role="tablist" aria-label="Sections">
+    <button role="tab" aria-selected="true" data-tab="concept">Core idea</button>
+    <button role="tab" aria-selected="false" data-tab="data">Data model</button>
+    <button role="tab" aria-selected="false" data-tab="scenarios">Scenarios</button>
+  </nav>
+
+  <section id="concept" role="tabpanel">
+    <div id="concept-prose"></div>
+    <div>
+      <h2>Where each component lives</h2>
+      <div class="layers" id="layers"></div>
+    </div>
+    <div>
+      <h2>Component map</h2>
+      <p class="muted" id="arch-caption"></p>
+      <div class="arch-wrap"><svg class="arch" id="arch-svg" role="img" aria-label="Component map"></svg></div>
+      <div class="card" id="arch-detail" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="data" role="tabpanel" hidden>
+    <div>
+      <h2>Tables</h2>
+      <p class="muted" id="erd-caption"></p>
+    </div>
+    <div class="legend">
+      <span><span class="key pk">PK</span>primary key</span>
+      <span><span class="key fk">FK</span>logical reference</span>
+      <span><span class="key uq">UQ</span>unique</span>
+    </div>
+    <div class="erd" id="erd"></div>
+    <div class="card" id="erd-detail" aria-live="polite"></div>
+  </section>
+
+  <section id="scenarios" role="tabpanel" hidden>
+    <div class="scen-layout" id="scen-layout">
+      <aside class="scen-rail" id="scen-rail">
+        <div class="scen-rail-bar">
+          <h2>Scenarios</h2>
+          <button class="btn" id="scen-fold" type="button" aria-expanded="true" aria-controls="scen-rail">Hide</button>
+        </div>
+        <div class="scen-rail-scroll">
+          <details class="scen-help">
+            <summary>How to read this</summary>
+            <p class="muted" id="scen-help-text"></p>
+          </details>
+          <div class="scen-list" id="scen-list"></div>
+        </div>
+      </aside>
+      <div class="scen-main">
+        <button class="btn scen-show" id="scen-show" type="button" hidden>Scenarios</button>
+        <div>
+          <h3 id="scen-title"></h3>
+          <p class="scen-open-flag" id="scen-flag" hidden>⚠️ Needs review.</p>
+          <p class="muted" id="scen-desc" style="margin:0"></p>
+        </div>
+        <div class="controls">
+          <button class="btn" id="scen-prev" type="button">Previous</button>
+          <button class="btn primary" id="scen-next" type="button">Next step</button>
+          <button class="btn" id="scen-reset" type="button">Start over</button>
+          <button class="btn" id="db-show" type="button" hidden>Database board</button>
+          <span class="muted" id="scen-count"></span>
+        </div>
+        <div class="scen-stage" id="scen-stage">
+          <div class="scen-phone" id="scen-phone">
+            <div class="phone-wrap" id="device-frame"></div>
+            <p class="phone-caption" id="phone-mode"></p>
+            <p class="here" id="phone-where"></p>
+          </div>
+          <div class="seq-wrap"><svg class="seq" id="scen-seq" role="img" aria-label="Sequence diagram for the selected scenario"></svg></div>
+          <div class="scen-side">
+            <div class="card step-card" id="scen-detail" aria-live="polite"></div>
+            <div class="db-board">
+              <div class="db-board-bar">
+                <b id="db-board-title">Database</b>
+                <button class="btn" id="db-fold" type="button" aria-expanded="true" aria-controls="scen-db">Hide</button>
+              </div>
+              <div id="scen-db" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* =====================================================================
+   DATA START — replace everything between DATA START and DATA END with
+   the product being explained. The machinery below the markers renders
+   whatever these objects describe; do not edit it unless broken.
+   ===================================================================== */
+
+const PRODUCT = {
+  title: 'Orderly: order placement',
+  subtitle: 'The API keeps idempotency in Redis, writes the order and its outbox row in one transaction, and a worker pushes through RMQ.',
+  device: 'phone',            // 'phone' | 'web' | null (no device column)
+  actor: 'Alex',              // the person whose screen is shown
+  helpText: 'Pick a scenario, then step through it or click any arrow. The handset on the left is that person\'s screen; it dims until a step changes it. Blue columns are tables. A dashed box is one database transaction. The tables and Redis on the right show the rows as of the selected step: an insert is green, an update is yellow, and a select is blue.',
+  concept: [
+    { h2: 'One order, one outbox row', html: '<p>A tap on <b>Place order</b> is one <code>POST /orders</code>. The API reserves the idempotency id in Redis, then commits the <code>Orders</code> row, the first <code>OrderEvents</code> row, and one <code>Outbox</code> row in a single database transaction. The push to the phone happens after the response: a worker reads <code>Outbox</code>, publishes to RMQ, and the push service delivers it.</p><p>A duplicate submit with the same idempotency id finds the key in Redis and returns the same order without touching the database.</p>' }
+  ],
+  layers: [
+    { name: 'Database', html: '<code>Users</code>, <code>Orders</code>, <code>OrderEvents</code>, <code>Outbox</code>.' },
+    { name: 'Redis', html: 'Idempotency keys: <code>order:{userId}:idem:{id}</code>. TTL is configuration.' },
+    { name: 'RMQ', html: 'The worker publishes each <code>Outbox</code> row; the push service consumes.' }
+  ],
+  archCaption: 'Click a component to see what it talks to.'
+};
+
+const ARCH = {
+  nodes: [
+    { id: 'app',    label: "Alex's app",   kind: 'frontend', row: 0, note: 'The mobile app. It sends one <code>POST /orders</code> per tap and renders from the response.' },
+    { id: 'api',    label: 'Orders API',   kind: 'backend',  row: 1, note: 'Checks Redis first, then owns the single write transaction.' },
+    { id: 'worker', label: 'Outbox worker',kind: 'backend',  row: 1, note: 'Polls <code>Outbox</code> by <code>(Status, Id)</code> and publishes to RMQ. Runs after the API response.' },
+    { id: 'db',     label: 'SQL database', kind: 'database', row: 2, note: '<code>Users</code>, <code>Orders</code>, <code>OrderEvents</code>, <code>Outbox</code>. One transaction per order.' },
+    { id: 'redis',  label: 'Redis',        kind: 'cache',    row: 2, note: 'Idempotency only. A duplicate submit is answered from here.' },
+    { id: 'rmq',    label: 'RMQ',          kind: 'queue',    row: 2, note: 'One message per Outbox row.' },
+    { id: 'push',   label: 'Push service', kind: 'external', row: 3, note: 'Delivers the notification to the device.' }
+  ],
+  edges: [
+    { from: 'app',    to: 'api',   label: 'POST /orders' },
+    { from: 'api',    to: 'redis', label: 'SET NX' },
+    { from: 'api',    to: 'db',    label: 'one transaction' },
+    { from: 'worker', to: 'db',    label: 'read Outbox' },
+    { from: 'worker', to: 'rmq',   label: 'publish' },
+    { from: 'rmq',    to: 'push',  label: 'consume' },
+    { from: 'push',   to: 'app',   label: 'notification' }
+  ]
+};
+
+const ERD_CAPTION = 'Click a table to highlight what it links to. All four tables live in one database; <code>Outbox</code> is the push queue.';
+
+const TABLES_DATA = [
+  { name: 'Users', note: 'profile', rel: ['Orders'],
+    cols: [['PK','UserId','integer'],['','Name','varchar'],['UQ','Email','varchar']],
+    why: ['The existing profile. <code>UserId</code> is the id every other table uses.',
+          '<code>Email</code> is unique; login resolves it to <code>UserId</code> once.'] },
+  { name: 'Orders', note: 'one row per order', rel: ['Users', 'OrderEvents', 'Outbox'],
+    cols: [['PK','OrderId','integer'],['FK','UserId','→ Users'],['','Status','placed | paid | shipped'],['','Total','decimal'],['','CreatedAt','datetime2']],
+    why: ['One row per order. <code>Status</code> moves forward only.',
+          'The insert and the first <code>OrderEvents</code> row commit together.'] },
+  { name: 'OrderEvents', note: 'timeline', rel: ['Orders'],
+    cols: [['PK','OrderId','→ Orders'],['PK','Seq','integer'],['','Type','order.placed | order.paid | …'],['','Body','varchar'],['','CreatedAt','datetime2']],
+    why: ['Append-only. <code>Seq</code> starts at 1 per order.',
+          'The app syncs with <code>Seq &gt; cursor</code>.'] },
+  { name: 'Outbox', note: 'push queue', rel: ['Orders'],
+    cols: [['PK','Id','integer'],['FK','OrderId','→ Orders'],['','Payload','json'],['','Status','1 Ready | 2 Sent'],['','CreatedAt','datetime2']],
+    why: ['Written in the same transaction as the order, so a committed order always has its push row.',
+          'The worker seeks <code>(Status, Id)</code>; sending flips <code>Status</code> to 2.'] }
+];
+
+// Initial rows shown on the Database board before step 1 of every scenario.
+// A scenario can override per table with its own `seed`.
+const DB_BASE = {
+  Users:       { cols: ['UserId','Name','Email'],
+                 rows: [{ UserId: '1001', Name: 'Alex', Email: 'alex@example.com' }] },
+  Orders:      { cols: ['OrderId','UserId','Status','Total'], rows: [] },
+  OrderEvents: { cols: ['OrderId','Seq','Type','Body'], rows: [] },
+  Outbox:      { cols: ['Id','OrderId','Payload','Status'], rows: [] }
+};
+
+const SCENARIOS = [
+  {
+    section: 'Orders',
+    title: 'Place an order',
+    desc: 'Alex (user 1001) places an order. The API reserves the idempotency id in Redis, commits the order, its first event, and one Outbox row in a single transaction, then answers. The push follows after the response.',
+    lanes: ["Alex's app", 'Orders API', 'Redis', 'Orders', 'OrderEvents', 'Outbox', 'RMQ', 'Push'],
+    steps: [
+      { f: "Alex's app", t: 'Orders API', label: 'POST /orders',
+        d: 'One tap, one call. The body carries an integer idempotency id generated on the phone.',
+        code: 'POST /orders\n{ "idempotencyId": 91, "items": [{ "sku": "A-100", "qty": 1 }], "total": 25 }',
+        ui: { items: [ { type: 'header', title: 'Checkout', sub: '1 item · 25.00' },
+                       { type: 'row', av: 'A', title: 'A-100 widget', sub: 'Qty 1 · 25.00' },
+                       { type: 'btn', label: 'Place order', primary: true } ] } },
+      { f: 'Orders API', t: 'Redis', label: 'Reserve idempotency id',
+        d: 'Key <code>order:1001:idem:91</code>. A miss stores <code>received</code> and the call continues. A hit returns the stored order without touching the database. The TTL is configuration.',
+        code: 'SET order:1001:idem:91 received NX',
+        redis: [{ op: 'set', key: 'order:1001:idem:91', value: 'received' }] },
+      { f: 'Orders API', t: 'Orders', txStart: true, txLabel: 'db transaction', label: 'INSERT Orders',
+        d: 'Order 7001 for user 1001. <code>Status</code> starts at placed.',
+        code: "INSERT INTO Orders (OrderId, UserId, Status, Total, CreatedAt)\nVALUES (7001, 1001, N'placed', 25, SYSUTCDATETIME());",
+        db: [{ table: 'Orders', op: 'insert', row: { OrderId: '7001', UserId: '1001', Status: 'placed', Total: '25' } }] },
+      { f: 'Orders API', t: 'OrderEvents', label: 'Append Seq 1',
+        d: 'The first timeline row. The app syncs this table with <code>Seq &gt; cursor</code>.',
+        code: "INSERT INTO OrderEvents (OrderId, Seq, Type, Body, CreatedAt)\nVALUES (7001, 1, N'order.placed', N'{\"total\":25}', SYSUTCDATETIME());",
+        db: [{ table: 'OrderEvents', op: 'insert', row: { OrderId: '7001', Seq: '1', Type: 'order.placed', Body: '{"total":25}' } }] },
+      { f: 'Orders API', t: 'Outbox', txEnd: true, label: 'Enqueue push',
+        d: 'Same transaction. A committed order always has its push row. <code>Status</code> 1 is Ready.',
+        code: "INSERT INTO Outbox (Id, OrderId, Payload, Status, CreatedAt)\nVALUES (501, 7001, N'{\"orderId\":7001}', 1, SYSUTCDATETIME());",
+        db: [{ table: 'Outbox', op: 'insert', row: { Id: '501', OrderId: '7001', Payload: '{"orderId":7001}', Status: '1 Ready' } }] },
+      { f: 'Orders API', t: 'Redis', label: 'Remember order 7001',
+        d: 'The key now stores the order id. A retry inside the TTL returns it and does not insert.',
+        code: 'SET order:1001:idem:91 {"orderId":7001}',
+        redis: [{ op: 'set', key: 'order:1001:idem:91', value: '{"orderId":7001}' }] },
+      { f: 'Orders API', t: "Alex's app", label: '200 { orderId }',
+        d: 'Everything is committed. The push has not happened yet.',
+        code: '200 {\n  "orderId": 7001\n}',
+        ui: { items: [ { type: 'header', title: 'Order placed', sub: 'Order 7001' },
+                       { type: 'bubble', text: 'Thanks Alex! Your order 7001 is placed.', sys: true },
+                       { type: 'btn', label: 'Track order', soft: true } ] } },
+      { f: 'Outbox', t: 'RMQ', async: true, label: 'Worker publishes',
+        d: 'The worker reads Ready rows by <code>(Status, Id)</code>, publishes, and flips <code>Status</code> to 2 Sent.',
+        code: "UPDATE Outbox SET Status = 2 WHERE Id = 501;",
+        db: [{ table: 'Outbox', op: 'update', match: { Id: '501' }, set: { Status: '2 Sent' } }] },
+      { f: 'RMQ', t: 'Push', async: true, label: 'Consume',
+        d: 'The push service consumes the message and calls the vendor API.' },
+      { f: 'Push', t: "Alex's app", async: true, label: 'Notification',
+        d: 'The device shows the confirmation notification.',
+        ui: { items: [ { type: 'header', title: 'Order placed', sub: 'Order 7001' },
+                       { type: 'bubble', text: 'Thanks Alex! Your order 7001 is placed.', sys: true },
+                       { type: 'toast', text: 'Orderly · Order 7001 confirmed' } ] } }
+    ]
+  },
+  {
+    section: 'Orders',
+    title: 'Duplicate submit',
+    desc: 'The same POST arrives twice (a retry, or a double tap). The second call finds the idempotency key in Redis and returns the same order. Nothing is written.',
+    lanes: ["Alex's app", 'Orders API', 'Redis'],
+    steps: [
+      { f: "Alex's app", t: 'Orders API', label: 'POST /orders (again)',
+        d: 'Same idempotency id 91.',
+        code: 'POST /orders\n{ "idempotencyId": 91, "items": [{ "sku": "A-100", "qty": 1 }], "total": 25 }',
+        ui: { items: [ { type: 'header', title: 'Checkout', sub: 'Retrying…' },
+                       { type: 'note', text: 'Connection restored. Resending the request.' } ] } },
+      { f: 'Orders API', t: 'Redis', label: 'GET the key',
+        d: 'Hit. The key stores order 7001 from the first call.',
+        code: 'GET order:1001:idem:91',
+        seedRedis: [{ key: 'order:1001:idem:91', value: '{"orderId":7001}' }],
+        redis: [{ op: 'get', key: 'order:1001:idem:91' }] },
+      { f: 'Orders API', t: "Alex's app", async: true, label: '200 { orderId: 7001 }',
+        d: 'The same body as the first call. No insert happened.',
+        code: '200 {\n  "orderId": 7001\n}',
+        ui: { items: [ { type: 'header', title: 'Order placed', sub: 'Order 7001' },
+                       { type: 'bubble', text: 'Thanks Alex! Your order 7001 is placed.', sys: true } ] } }
+    ],
+    seed: { Orders: [{ OrderId: '7001', UserId: '1001', Status: 'placed', Total: '25' }],
+            OrderEvents: [{ OrderId: '7001', Seq: '1', Type: 'order.placed', Body: '{"total":25}' }],
+            Outbox: [{ Id: '501', OrderId: '7001', Payload: '{"orderId":7001}', Status: '2 Sent' }] }
+  }
+];
+
+/* ===== DATA END ===================================================== */
+
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const TABLES = new Set(Object.keys(DB_BASE));
+
+  /* ---- static text ---- */
+  document.title = PRODUCT.title;
+  document.getElementById('page-title').textContent = PRODUCT.title;
+  document.getElementById('page-subtitle').innerHTML = PRODUCT.subtitle || '';
+  document.getElementById('arch-caption').innerHTML = PRODUCT.archCaption || '';
+  document.getElementById('erd-caption').innerHTML = ERD_CAPTION || '';
+  document.getElementById('scen-help-text').innerHTML = PRODUCT.helpText || '';
+  document.getElementById('concept-prose').innerHTML =
+    (PRODUCT.concept || []).map(b => `<div><h2>${esc(b.h2)}</h2>${b.html}</div>`).join('');
+  document.getElementById('layers').innerHTML =
+    (PRODUCT.layers || []).map(l => `<div class="layer"><b>${esc(l.name)}</b><span>${l.html}</span></div>`).join('');
+
+  /* ---- tabs ---- */
+  const tabs = [...document.querySelectorAll('nav [role=tab]')];
+  function showTab(id, push) {
+    const tab = tabs.find(t => t.dataset.tab === id) || tabs[0];
+    tabs.forEach(o => o.setAttribute('aria-selected', String(o === tab)));
+    document.querySelectorAll('section[role=tabpanel]').forEach(s => { s.hidden = s.id !== tab.dataset.tab; });
+    document.querySelector('main').classList.toggle('wide', tab.dataset.tab === 'scenarios');
+    if (push !== false) history.replaceState(null, '', '#' + tab.dataset.tab);
+  }
+  tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  const initial = (location.hash || '').replace(/^#/, '');
+  if (initial) showTab(initial, false);
+
+  /* ---- Core idea: component map with moving arrows ---- */
+  (function renderArch() {
+    const svg = document.getElementById('arch-svg');
+    const detail = document.getElementById('arch-detail');
+    const NW = 150, NH = 48, W = 1000;
+    const rows = {};
+    ARCH.nodes.forEach(n => { (rows[n.row] = rows[n.row] || []).push(n); });
+    const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
+    const H = 70 + rowKeys.length * 120;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    rowKeys.forEach((r, ri) => {
+      rows[r].forEach((n, i) => {
+        n.x = W * (i + 1) / (rows[r].length + 1);
+        n.y = 60 + ri * 120;
+      });
+    });
+    const byId = {};
+    ARCH.nodes.forEach(n => { byId[n.id] = n; });
+    const el = (tag, attrs, parent) => {
+      const e = document.createElementNS(NS, tag);
+      Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+      (parent || svg).appendChild(e);
+      return e;
+    };
+    const defs = el('defs', {});
+    const mk = el('marker', { id: 'arch-arr', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+    el('path', { d: 'M0,0 L10,5 L0,10 z', class: 'arrhead' }, mk);
+    function clip(a, b) { // point on a's border toward b
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const sx = dx === 0 ? Infinity : (NW / 2 + 6) / Math.abs(dx);
+      const sy = dy === 0 ? Infinity : (NH / 2 + 6) / Math.abs(dy);
+      const s = Math.min(sx, sy, 0.5);
+      return { x: a.x + dx * s, y: a.y + dy * s };
+    }
+    const edgeEls = ARCH.edges.map(e => {
+      const a = byId[e.from], b = byId[e.to];
+      if (!a || !b) return null;
+      const p1 = clip(a, b), p2 = clip(b, a);
+      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+      const g = el('g', { class: 'edge' });
+      el('path', { d: `M${p1.x},${p1.y} L${p2.x},${p2.y}`, 'marker-end': 'url(#arch-arr)' }, g);
+      if (e.label) el('text', { x: mx, y: my - 6, 'text-anchor': 'middle' }, g).textContent = e.label;
+      return { g, e };
+    }).filter(Boolean);
+    const nodeEls = {};
+    ARCH.nodes.forEach(n => {
+      const g = el('g', { class: 'node k-' + (n.kind || 'backend'), tabindex: 0, role: 'button', 'aria-label': n.label });
+      el('rect', { x: n.x - NW / 2, y: n.y - NH / 2, width: NW, height: NH, rx: 9 }, g);
+      el('text', { x: n.x, y: n.y + 1, 'text-anchor': 'middle' }, g).textContent = n.label;
+      el('text', { class: 'kind', x: n.x, y: n.y + 16, 'text-anchor': 'middle' }, g).textContent = n.kind || '';
+      const pick = () => select(n.id);
+      g.addEventListener('click', pick);
+      g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(); } });
+      nodeEls[n.id] = g;
+    });
+    function select(id) {
+      const n = byId[id];
+      const near = new Set([id]);
+      ARCH.edges.forEach(e => { if (e.from === id) near.add(e.to); if (e.to === id) near.add(e.from); });
+      svg.classList.add('focus');
+      Object.entries(nodeEls).forEach(([nid, g]) => {
+        g.classList.toggle('on', nid === id);
+        g.classList.toggle('rel', nid !== id && near.has(nid));
+      });
+      edgeEls.forEach(({ g, e }) => g.classList.toggle('on', e.from === id || e.to === id));
+      const links = ARCH.edges.filter(e => e.from === id || e.to === id)
+        .map(e => e.from === id ? `→ <b>${esc(byId[e.to].label)}</b>${e.label ? ' · ' + esc(e.label) : ''}` : `← <b>${esc(byId[e.from].label)}</b>${e.label ? ' · ' + esc(e.label) : ''}`);
+      detail.innerHTML = `<h3>${esc(n.label)}</h3><div class="muted" style="font-size:13px">${links.join(' &nbsp; ')}</div><p style="margin:8px 0 0">${n.note || ''}</p>`;
+    }
+    if (ARCH.nodes.length) select(ARCH.nodes[0].id);
+  })();
+
+  /* ---- Data model: ERD ---- */
+  (function renderErd() {
+    const erd = document.getElementById('erd');
+    const detail = document.getElementById('erd-detail');
+    const els = {};
+    TABLES_DATA.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tbl';
+      b.setAttribute('aria-label', 'Table ' + t.name);
+      b.innerHTML = `<header><span class="mono">${esc(t.name)}</span><span class="muted" style="font-size:12px">${esc(t.note || '')}</span></header><ul>${
+        t.cols.map(([k, n, ty]) => `<li><span class="key ${k.toLowerCase()}">${k}</span><span>${esc(n)}</span><span class="t">${esc(ty)}</span></li>`).join('')}</ul>`;
+      b.addEventListener('click', () => select(t.name));
+      erd.appendChild(b);
+      els[t.name] = b;
+    });
+    function select(name) {
+      const t = TABLES_DATA.find(x => x.name === name);
+      erd.classList.add('focus');
+      Object.entries(els).forEach(([n, elx]) => {
+        elx.classList.toggle('on', n === name);
+        elx.classList.toggle('rel', t.rel.includes(n));
+      });
+      detail.innerHTML = `<h3 class="mono">${esc(t.name)}</h3><div class="muted" style="font-size:13px">Linked to: ${t.rel.map(r => '<code>' + esc(r) + '</code>').join(', ') || 'nothing'}</div><ul>${t.why.map(w => '<li>' + w + '</li>').join('')}</ul>`;
+    }
+    if (TABLES_DATA.length) select(TABLES_DATA[0].name);
+  })();
+
+  /* ---- Scenarios: sequence diagram ---- */
+  const svg = document.getElementById('scen-seq');
+  const detailEl = document.getElementById('scen-detail');
+  const countEl = document.getElementById('scen-count');
+  const prev = document.getElementById('scen-prev');
+  const next = document.getElementById('scen-next');
+  let lanes = [], steps = [], msgEls = [], cur = 0, scenario = null;
+
+  const sel = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    (parent || svg).appendChild(e);
+    return e;
+  };
+  const arrow = c => `url(#seq-arr-${c})`;
+
+  function loadSeq(newLanes, newSteps) {
+    lanes = newLanes; steps = newSteps;
+    const idx = v => typeof v === 'number' ? v : lanes.indexOf(v);
+    svg.replaceChildren();
+    const W = 1000, laneW = W / lanes.length, x = i => laneW * i + laneW / 2;
+    const ys = [];
+    let y = 90;
+    steps.forEach(s => {
+      if (s.txStart) y += 28;
+      ys.push(y);
+      y += 46;
+      if (s.txEnd) y += 10;
+    });
+    const H = y - 10;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const defs = sel('defs', {});
+    ['muted', 'accent', 'fg'].forEach(c => {
+      const m = sel('marker', { id: `seq-arr-${c}`, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+      sel('path', { d: 'M0,0 L10,5 L0,10 z', fill: `var(--${c})` }, m);
+    });
+    lanes.forEach((name, i) => {
+      const cls = TABLES.has(name) ? ' table' : '';
+      sel('line', { class: 'lifeline', x1: x(i), x2: x(i), y1: 46, y2: H - 4 });
+      sel('rect', { class: 'lane-box' + cls, x: x(i) - laneW / 2 + 6, y: 10, width: laneW - 12, height: 36, rx: 7 });
+      sel('text', { class: 'lane-label' + cls, x: x(i), y: 33, 'text-anchor': 'middle' }).textContent = name;
+    });
+    steps.forEach((s, i) => {
+      if (!s.txStart) return;
+      const j = steps.findIndex((t, k) => k >= i && t.txEnd);
+      if (j < i) return;
+      const involved = [];
+      for (let k = i; k <= j; k++) {
+        [steps[k].f, steps[k].t].forEach(name => {
+          if (TABLES.has(name)) involved.push(lanes.indexOf(name));
+        });
+      }
+      const cols = involved.filter(n => n >= 0);
+      const span = cols.length ? cols : lanes.map((_, n) => n).filter(n => TABLES.has(lanes[n]));
+      if (!span.length) return;
+      const minX = Math.min(...span.map(n => x(n)));
+      const maxX = Math.max(...span.map(n => x(n)));
+      const left = minX - laneW / 2 + 6;
+      const right = maxX + laneW / 2 - 6;
+      sel('rect', { class: 'tx', x: left, y: ys[i] - 42, width: Math.max(right - left, 80), height: ys[j] - ys[i] + 56, rx: 8 });
+      sel('text', { class: 'tx-label', x: left + 10, y: ys[i] - 28 }).textContent = s.txLabel || 'transaction';
+    });
+    msgEls = steps.map((s, i) => {
+      const yy = ys[i];
+      const f = idx(s.f), t = s.self ? f : idx(s.t);
+      const g = sel('g', { class: 'msg' + (s.async ? ' async' : ''), tabindex: 0, role: 'button', 'aria-label': `Step ${i + 1}: ${s.label}` });
+      const x1 = x(f), x2 = x(t);
+      let line;
+      if (s.self) {
+        line = sel('path', { d: `M${x1},${yy - 8} h34 v16 h-28`, fill: 'none', stroke: 'var(--muted)', 'stroke-width': 1.3, 'marker-end': arrow('muted') }, g);
+        sel('rect', { class: 'hit', x: x1 - 20, y: yy - 22, width: 260, height: 40 }, g);
+        sel('text', { x: x1 + 44, y: yy + 4 }, g).textContent = s.label;
+      } else {
+        const dir = x2 > x1 ? 1 : -1;
+        line = sel('line', { x1: x1 + dir * 4, x2: x2 - dir * 4, y1: yy, y2: yy, 'marker-end': arrow('muted') }, g);
+        sel('rect', { class: 'hit', x: Math.min(x1, x2), y: yy - 24, width: Math.abs(x2 - x1), height: 34 }, g);
+        sel('text', { x: (x1 + x2) / 2, y: yy - 8, 'text-anchor': 'middle' }, g).textContent = s.label;
+      }
+      const cx = s.self ? x1 - 14 : x1 + (x2 > x1 ? -14 : 14);
+      sel('circle', { cx, cy: yy, r: 9 }, g);
+      sel('text', { class: 'num', x: cx, y: yy + 4, 'text-anchor': 'middle' }, g).textContent = i + 1;
+      g.addEventListener('click', () => show(i));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(i); } });
+      return { g, line, f, t };
+    });
+    show(0);
+  }
+
+  function show(i) {
+    cur = i;
+    msgEls.forEach(({ g, line }, j) => {
+      const c = j === i ? 'accent' : j < i ? 'fg' : 'muted';
+      g.classList.toggle('on', j === i);
+      g.classList.toggle('done', j < i);
+      line.setAttribute('marker-end', arrow(c));
+      if (line.tagName === 'path') line.setAttribute('stroke', `var(--${c})`);
+    });
+    const s = steps[i], m = msgEls[i];
+    detailEl.innerHTML = `<h3>${i + 1}. ${esc(lanes[m.f])}${s.self ? '' : ' → ' + esc(lanes[m.t])}: ${esc(s.label)}</h3><p class="muted" style="margin:0">${s.d || ''}</p>${s.code ? '<pre>' + esc(s.code) + '</pre>' : ''}`;
+    renderDb(i);
+    renderDevice(i);
+    countEl.textContent = `Step ${i + 1} of ${steps.length}`;
+    prev.disabled = i === 0;
+    next.disabled = i === steps.length - 1;
+  }
+
+  prev.addEventListener('click', () => show(Math.max(0, cur - 1)));
+  next.addEventListener('click', () => show(Math.min(steps.length - 1, cur + 1)));
+  document.getElementById('scen-reset').addEventListener('click', () => show(0));
+
+  /* ---- Database + Redis board (declarative ops) ---- */
+  function dbStateAt(i) {
+    const state = {};
+    Object.entries(DB_BASE).forEach(([name, t]) => {
+      const seedRows = (scenario.seed && scenario.seed[name]) || t.rows || [];
+      state[name] = { cols: t.cols, rows: seedRows.map(r => ({ ...r, _flag: null })) };
+    });
+    for (let s = 0; s <= i; s++) {
+      (steps[s].db || []).forEach(op => {
+        const t = state[op.table];
+        if (!t) return;
+        const match = row => Object.entries(op.match || {}).every(([k, v]) => String(row[k]) === String(v));
+        if (op.op === 'insert') t.rows.push({ ...op.row, _flag: s === i ? 'touch' : null });
+        else if (op.op === 'update') t.rows.forEach(r => { if (match(r)) { Object.assign(r, op.set || {}); if (s === i) r._flag = 'update'; } });
+        else if (op.op === 'delete') t.rows = t.rows.filter(r => !match(r));
+        else if (op.op === 'read' && s === i) t.rows.forEach(r => { if (match(r)) r._flag = 'read'; });
+      });
+    }
+    return state;
+  }
+
+  function redisStateAt(i) {
+    const rows = [];
+    const find = key => rows.find(r => r.Key === key);
+    (steps.map(s => s.seedRedis || []).flat()).forEach(s => {
+      if (!find(s.key)) rows.push({ Key: s.key, Value: s.value, TTL: s.ttl || 'config', _flag: null });
+    });
+    for (let s = 0; s <= i; s++) {
+      (steps[s].redis || []).forEach(op => {
+        if (op.op === 'set') {
+          const r = find(op.key);
+          if (r) { r.Value = op.value; if (s === i) r._flag = 'update'; }
+          else rows.push({ Key: op.key, Value: op.value, TTL: op.ttl || 'config', _flag: s === i ? 'touch' : null });
+        } else if (op.op === 'del') {
+          const at = rows.findIndex(r => r.Key === op.key);
+          if (at >= 0) rows.splice(at, 1);
+        } else if (op.op === 'get' && s === i) {
+          const r = find(op.key);
+          if (r) r._flag = 'read';
+        }
+      });
+    }
+    return rows;
+  }
+
+  function dbCard(title, meta, cols, rows, on) {
+    const card = document.createElement('div');
+    card.className = 'db-card' + (on ? ' on' : '');
+    card.innerHTML = `<header><b class="mono">${esc(title)}</b><span>${esc(meta)}</span></header>`;
+    if (!rows.length) {
+      card.insertAdjacentHTML('beforeend', '<div class="db-empty">No rows yet.</div>');
+      return card;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead>';
+    const body = document.createElement('tbody');
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      if (r._flag === 'touch') tr.className = 'touch';
+      else if (r._flag === 'update') tr.className = 'update';
+      else if (r._flag === 'read') tr.className = 'read';
+      tr.innerHTML = cols.map(c => {
+        const v = r[c];
+        return v == null || v === '' ? '<td class="nil">null</td>' : `<td>${esc(v)}</td>`;
+      }).join('');
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    card.appendChild(table);
+    return card;
+  }
+
+  function renderDb(i) {
+    const host = document.getElementById('scen-db');
+    host.replaceChildren();
+    const grid = document.createElement('div');
+    grid.className = 'db-grid';
+    const step = steps[i];
+    const state = dbStateAt(i);
+    const hasRedis = steps.some(s => (s.redis || []).length || (s.seedRedis || []).length);
+    if (hasRedis) {
+      const rows = redisStateAt(i);
+      const touched = rows.some(r => r._flag);
+      grid.appendChild(dbCard('Redis', rows.length + (rows.length === 1 ? ' key' : ' keys') + (touched ? ' · this step' : ''), ['Key', 'Value', 'TTL'], rows, touched));
+    }
+    // tables in lane order first, then the rest that have rows or ops
+    const inLanes = lanes.filter(l => TABLES.has(l));
+    const touchedTables = new Set(steps.flatMap(s => (s.db || []).map(o => o.table)));
+    const order = [...new Set([...inLanes, ...Object.keys(state).filter(n => state[n].rows.length || touchedTables.has(n))])];
+    order.forEach(name => {
+      const t = state[name];
+      if (!t) return;
+      const on = (step.db || []).some(o => o.table === name) || step.t === name || step.f === name;
+      grid.appendChild(dbCard(name, t.rows.length + (t.rows.length === 1 ? ' row' : ' rows'), t.cols, t.rows, on));
+    });
+    host.appendChild(grid);
+    document.getElementById('db-board-title').textContent = hasRedis ? 'Database and Redis' : 'Database';
+  }
+
+  /* ---- Device mockup ---- */
+  function screenHtml(ui) {
+    const items = (ui.items || []).map(it => {
+      if (it.type === 'header') return `<div class="scr-header">${it.back ? '<span class="back">‹</span>' : ''}<div><b>${esc(it.title || '')}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</div></div>`;
+      if (it.type === 'row') return `<div class="scr-row${it.on ? ' on' : ''}"><div class="scr-av"${it.color ? ` style="background:${esc(it.color)}"` : ''}>${esc(it.av || (it.title || '?')[0])}</div><div><b>${esc(it.title || '')}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</div>${it.badge ? `<span class="scr-badge">${esc(it.badge)}</span>` : '<span></span>'}</div>`;
+      if (it.type === 'bubble') return `<div class="bubble${it.out ? ' out' : ''}${it.sys ? ' sys' : ''}">${esc(it.text || '')}${it.meta ? `<div class="meta">${esc(it.meta)}</div>` : ''}</div>`;
+      if (it.type === 'note') return `<div class="scr-note">${esc(it.text || '')}</div>`;
+      if (it.type === 'btn') return `<div class="scr-btn${it.soft ? ' soft' : ''}">${esc(it.label || '')}</div>`;
+      if (it.type === 'input') return `<div class="composer${it.send ? ' send' : ''}${it.locked ? ' locked' : ''}">${esc(it.text || 'Type a message')}</div>`;
+      if (it.type === 'toast') return `<div class="toast">${esc(it.text || '')}</div>`;
+      if (it.type === 'banner') return `<div class="phone-banner"><b>${esc(it.app || PRODUCT.title)}</b><span>${esc(it.text || '')}</span></div>`;
+      return '';
+    }).join('');
+    return items;
+  }
+
+  function renderDevice(i) {
+    const stage = document.getElementById('scen-stage');
+    const holder = document.getElementById('scen-phone');
+    const frame = document.getElementById('device-frame');
+    const device = scenario.device === undefined ? PRODUCT.device : scenario.device;
+    if (!device) { stage.classList.add('no-phone'); return; }
+    stage.classList.remove('no-phone');
+    let uiIdx = -1;
+    for (let s = i; s >= 0; s--) if (steps[s].ui) { uiIdx = s; break; }
+    const ui = uiIdx >= 0 ? steps[uiIdx].ui : null;
+    const live = !!steps[i].ui;
+    holder.classList.toggle('live', live);
+    holder.classList.toggle('idle', !live);
+    const actor = scenario.actor || PRODUCT.actor || 'User';
+    document.getElementById('phone-mode').textContent = ((ui && ui.mode === 'background') ? 'Background' : 'Foreground') + ' · ' + actor;
+    document.getElementById('phone-where').textContent = live ? 'This step is on this screen' : '';
+    const away = ui && ui.mode === 'away';
+    const body = ui && !away ? `<div class="dev-body">${screenHtml(ui)}</div>` : '';
+    const awayHtml = away ? `<div class="away-time">10:21</div><div class="away-date">Monday 10 November</div><div class="away-note">${esc(PRODUCT.title)} is closed</div>${(ui.items || []).filter(it => it.type === 'banner').map(it => `<div class="phone-banner"><b>${esc(it.app || PRODUCT.title)}</b><span>${esc(it.text || '')}</span></div>`).join('')}` : '';
+    const screen = `<div class="dev-screen${away ? ' away' : ''}"><div class="ios-status"><span>10:21</span><span>▮▮▮ WiFi ▮</span></div>${away ? awayHtml : body || '<div class="dev-body"><div class="scr-note">Waiting…</div></div>'}</div>`;
+    frame.innerHTML = device === 'web'
+      ? `<div class="web"><div class="web-bar"><i></i><i></i><i></i><span class="web-url">${esc(PRODUCT.url || 'app.example.com')}</span></div>${screen}</div>`
+      : `<div class="phone">${screen}</div>`;
+  }
+
+  /* ---- Scenario rail ---- */
+  const list = document.getElementById('scen-list');
+  const btns = [];
+  const sections = [...new Set(SCENARIOS.map(s => s.section))];
+  sections.forEach(sec => {
+    const wrap = document.createElement('div');
+    wrap.className = 'scen-section';
+    if (sec) wrap.innerHTML = `<h3>${esc(sec)}</h3>`;
+    const row = document.createElement('div');
+    row.className = 'scen-btns';
+    SCENARIOS.forEach((sc, i) => {
+      if (sc.section !== sec) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn' + (sc.review ? ' review' : '');
+      b.textContent = sc.title;
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => pick(i));
+      row.appendChild(b);
+      btns.push({ b, i });
+    });
+    wrap.appendChild(row);
+    list.appendChild(wrap);
+  });
+
+  function pick(i) {
+    scenario = SCENARIOS[i];
+    btns.forEach(({ b, i: j }) => b.setAttribute('aria-pressed', String(j === i)));
+    document.getElementById('scen-title').textContent = scenario.title;
+    document.getElementById('scen-flag').hidden = !scenario.review;
+    document.getElementById('scen-desc').innerHTML = scenario.desc || '';
+    loadSeq(scenario.lanes, scenario.steps);
+  }
+
+  /* ---- fold buttons ---- */
+  const layout = document.getElementById('scen-layout');
+  const showBtn = document.getElementById('scen-show');
+  document.getElementById('scen-fold').addEventListener('click', () => { layout.classList.add('folded'); showBtn.hidden = false; });
+  showBtn.addEventListener('click', () => { layout.classList.remove('folded'); showBtn.hidden = true; });
+  const stage = document.getElementById('scen-stage');
+  const dbShow = document.getElementById('db-show');
+  document.getElementById('db-fold').addEventListener('click', () => { stage.classList.add('db-folded'); dbShow.hidden = false; });
+  dbShow.addEventListener('click', () => { stage.classList.remove('db-folded'); dbShow.hidden = true; });
+
+  if (SCENARIOS.length) pick(0);
+})();
+</script>
+</body>
+</html>
