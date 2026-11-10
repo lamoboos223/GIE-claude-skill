@@ -1,0 +1,6 @@
+{
+  "name": "gie",
+  "description": "GIE (Generate Interactive Explainer): generates a single-file interactive HTML explainer for a product or system design, with a core-idea component map, a clickable ERD, and step-through scenario sequence diagrams.",
+  "version": "0.1.0",
+  "author": { "name": "lama" }
+}

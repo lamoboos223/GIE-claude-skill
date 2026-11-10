@@ -1,0 +1,12 @@
+{
+  "name": "gie",
+  "description": "GIE (Generate Interactive Explainer): a Claude Code skill that generates single-file interactive HTML explainers for products and system designs.",
+  "owner": { "name": "lama" },
+  "plugins": [
+    {
+      "name": "gie",
+      "source": "./",
+      "description": "GIE (Generate Interactive Explainer): single-file interactive HTML explainers with component map, ERD, and step-through scenarios."
+    }
+  ]
+}

@@ -24,13 +24,20 @@ Three tabs, all interactive, one HTML file, no dependencies:
 
 ## Install
 
-Copy the skill folder into your user skills directory:
+This repo is a Claude Code plugin marketplace. Inside Claude Code:
 
-```bash
-cp -R gie ~/.claude/skills/gie
+```
+/plugin marketplace add <github-user>/consultant-claude-skill
+/plugin install gie@gie
 ```
 
-New Claude Code sessions list it automatically.
+The skill then loads as `gie:gie` in every session, and `/plugin` updates it when the repo changes.
+
+Manual fallback (no GitHub needed): copy the skill folder into your user skills directory:
+
+```bash
+cp -R skills/gie ~/.claude/skills/gie
+```
 
 ## Use
 
@@ -48,7 +55,10 @@ The more you describe (entities, flows, failure cases, external dependencies, mo
 ## Repository layout
 
 ```
-gie/
+.claude-plugin/
+  marketplace.json          # lets this repo act as a plugin marketplace
+  plugin.json               # the gie plugin manifest
+skills/gie/
   SKILL.md                  # skill entry point: workflow + quality bar
   template/explainer.html   # the full page machinery, data-driven; ships with a sample product
   reference/data-format.md  # field-by-field schema for the data block
@@ -57,6 +67,6 @@ README.md
 
 ## How it works
 
-All page content lives in six JS constants (`PRODUCT`, `ARCH`, `ERD_CAPTION`, `TABLES_DATA`, `DB_BASE`, `SCENARIOS`) inside one marked data block. The rendering machinery below the markers never changes, so generation is reliable: Claude writes data, not UI code. Open `gie/template/explainer.html` directly in a browser to see the built-in sample product (Orderly) that exercises every feature.
+All page content lives in six JS constants (`PRODUCT`, `ARCH`, `ERD_CAPTION`, `TABLES_DATA`, `DB_BASE`, `SCENARIOS`) inside one marked data block. The rendering machinery below the markers never changes, so generation is reliable: Claude writes data, not UI code. Open `skills/gie/template/explainer.html` directly in a browser to see the built-in sample product (Orderly) that exercises every feature.
 
 Supports light and dark mode, reduced motion, keyboard navigation on clickable diagram elements, and works offline.
